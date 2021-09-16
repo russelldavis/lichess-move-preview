@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Lichess Move Preview",
+  "description": "Shows a preview of a move when you hover over a destination square",
+  "version": "0.1",
+  "permissions": [],
+  "icons": {
+    "16": "images/icon-16.png",
+    "48": "images/icon-48.png",
+    "128": "images/icon-128.png"
+  },
+  "content_scripts": [{
+    "matches": ["https://lichess.org/*"],
+    "js": [
+      "contentEntry.js"
+    ]
+  }],
+  "web_accessible_resources": [{
+    "matches": ["https://lichess.org/*"],
+    "resources": [
+      "content.js"
+    ]
+  }]
+}

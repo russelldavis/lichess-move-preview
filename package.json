@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {},
+  "devDependencies": {
+    "@types/chrome": "^0.0.154"
+  }
+}

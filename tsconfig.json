@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "module": "esnext",
+    "target": "ES2019",
+    "lib": [
+        "ES2019",
+        "ES2020.String",
+        "DOM",
+        "DOM.Iterable"
+    ],
+    "allowSyntheticDefaultImports": true,
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "useDefineForClassFields": true,
+    "forceConsistentCasingInFileNames": true,
+  }
+}
