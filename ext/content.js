@@ -11,8 +11,8 @@ function restoreDestPiece() {
   }
 }
 
-function getBoardItem(cgBoard, selector, cgKey) {
-  const els = cgBoard.querySelectorAll(selector);
+function getPiece(cgBoard, cgKey) {
+  const els = cgBoard.querySelectorAll("piece");
   for (const el of els) {
     if (el["cgKey"] === cgKey) {
       return el;
@@ -82,11 +82,11 @@ function tryInit() {
     }
     console.log("mouseover", event);
     const selSquare = cgBoard.querySelector("square.selected");
-    const selPiece = getBoardItem(cgBoard, "piece", selSquare["cgKey"]);
+    const selPiece = getPiece(cgBoard, selSquare["cgKey"]);
     lazyInitSelection(hoverPiece, selSquare, selPiece);
     hoverPiece.style.transform = destSquare.style.transform;
 
-    destPiece = getBoardItem(cgBoard, "piece", destSquare["cgKey"]);
+    destPiece = getPiece(cgBoard, destSquare["cgKey"]);
     if (destPiece) {
       destPiece.style.visibility = "hidden";
     }
@@ -102,7 +102,7 @@ function tryInit() {
     }
     console.log("mouseout", event);
     const selSquare = cgBoard.querySelector("square.selected");
-    const selPiece = getBoardItem(cgBoard, "piece", selSquare["cgKey"]);
+    const selPiece = getPiece(cgBoard, selSquare["cgKey"]);
     hoverPiece.style.transform = selSquare.style.transform;
     restoreDestPiece();
   });
