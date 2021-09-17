@@ -29,7 +29,7 @@ function addHoverPiece(cgBoard) {
   return hoverPiece;
 }
 
-function lazyInitSelection(hoverPiece, selSquare, selPiece) {
+function lazyInitSelection(cgBoard, hoverPiece, selSquare) {
   if (selSquareKey === selSquare["cgKey"]) {
     return;
   }
@@ -38,6 +38,7 @@ function lazyInitSelection(hoverPiece, selSquare, selPiece) {
   cleanUpLastSelection?.();
 
   selSquareKey = selSquare["cgKey"];
+  const selPiece = getPiece(cgBoard, selSquare["cgKey"]);
   selPiece.style.visibility = "hidden";
   hoverPiece.className = selPiece.className;
   setStyleWithoutTransition(hoverPiece, {
@@ -59,6 +60,22 @@ function lazyInitSelection(hoverPiece, selSquare, selPiece) {
   waitForNodeRemoval(selSquare).then(_cleanUpLastSelection);
 }
 
+function addMoveDestListener(cgBoard, eventName, callback) {
+  cgBoard.addEventListener(eventName, (event) => {
+    if (event.buttons) {
+      return; // Don't do anything while dragging
+    }
+    /** @type {HTMLElement} */
+    const target = event.target;
+    if (target.nodeName !== "SQUARE" || !target.classList.contains("move-dest")) {
+      return;
+    }
+    console.log(eventName, event);
+    const selSquare = cgBoard.querySelector("square.selected");
+    callback(target, selSquare);
+  });
+}
+
 function tryInit() {
   const cgBoard = $("cg-board");
   // Several empty boards can get rendered and then removed during initialization.
@@ -67,23 +84,12 @@ function tryInit() {
   if (!(cgBoard && ($(".rcontrols") || $(".analyse__moves")))) {
     return false;
   }
-  console.log("Lichess Move Preview is activated");
 
+  console.log("Lichess Move Preview is activated");
   const hoverPiece = addHoverPiece(cgBoard);
 
-  cgBoard.addEventListener("mouseover", (event) => {
-    if (event.buttons) {
-      return; // Don't do anything while dragging
-    }
-    /** @type {HTMLElement} */
-    const destSquare = event.target;
-    if (destSquare.nodeName !== "SQUARE" || !destSquare.classList.contains("move-dest")) {
-      return;
-    }
-    console.log("mouseover", event);
-    const selSquare = cgBoard.querySelector("square.selected");
-    const selPiece = getPiece(cgBoard, selSquare["cgKey"]);
-    lazyInitSelection(hoverPiece, selSquare, selPiece);
+  addMoveDestListener(cgBoard, "mouseover", (destSquare, selSquare) => {
+    lazyInitSelection(cgBoard, hoverPiece, selSquare);
     hoverPiece.style.transform = destSquare.style.transform;
 
     destPiece = getPiece(cgBoard, destSquare["cgKey"]);
@@ -91,21 +97,12 @@ function tryInit() {
       destPiece.style.visibility = "hidden";
     }
   });
-  cgBoard.addEventListener("mouseout", (event) => {
-    if (event.buttons) {
-      return; // Don't do anything while dragging
-    }
-    /** @type {HTMLElement} */
-    const destSquare = event.target;
-    if (destSquare.nodeName !== "SQUARE" || !destSquare.classList.contains("move-dest")) {
-      return;
-    }
-    console.log("mouseout", event);
-    const selSquare = cgBoard.querySelector("square.selected");
-    const selPiece = getPiece(cgBoard, selSquare["cgKey"]);
+
+  addMoveDestListener(cgBoard, "mouseout", (_destSquare, selSquare) => {
     hoverPiece.style.transform = selSquare.style.transform;
     restoreDestPiece();
   });
+
   return true;
 }
 
