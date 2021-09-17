@@ -1,38 +1,50 @@
+import { setStyleWithoutTransition, waitForNodeRemoval } from "./utils.js";
 const $ = document.querySelector.bind(document);
+let destPiece = null;
+
+function restoreDestPiece() {
+  if (destPiece) {
+    destPiece.style.visibility = "";
+    destPiece = null;
+  }
+}
 
 function getBoardItem(cgBoard, selector, cgKey) {
   const els = cgBoard.querySelectorAll(selector);
   for (const el of els) {
-    if (el.cgKey === cgKey) {
+    if (el["cgKey"] === cgKey) {
       return el;
     }
   }
   return null;
 }
 
-function moveHoverPiece(hoverPiece, selPiece, destSquare) {
-  hoverPiece.style.transition = null;
-  hoverPiece.className = selPiece.className;
-  hoverPiece.style.visibility = null;
-  hoverPiece.style.transform = selPiece.style.transform;
-  getComputedStyle(hoverPiece).transform;
-  hoverPiece.style.transition = "transform 0.1s ease-in";
-  hoverPiece.style.transform = destSquare.style.transform;
-  selPiece.style.visibility = "hidden";
+function addHoverPiece(cgBoard) {
+  const hoverPiece = document.createElement("piece");
+  hoverPiece.style.opacity = "0";
+  hoverPiece.style.transition = "transform 0.1s ease-in, opacity 0.1s ease-in";
+  cgBoard.parentNode.appendChild(hoverPiece);
+  return hoverPiece;
 }
 
-function moveHoverPiece2(hoverPiece, selPiece, destSquare) {
-  hoverPiece.className = selPiece.className;
-  hoverPiece.style.visibility = null;
-  hoverPiece.style.transform = destSquare.style.transform;
-  // FLIP technique
-  hoverPiece.animate(
-    {transform: selPiece.style.transform, offset: 0},
-    {duration: 100, easing: "ease-in"}
-  );
+function lazyInitHovering(_cgBoard, hoverPiece, selSquare, selPiece) {
+  // This works because a new selSquare is created every time a new selection is made
+  if (selSquare._lmpDidInit) {
+    return;
+  }
+  selSquare._lmpDidInit = true;
   selPiece.style.visibility = "hidden";
+  hoverPiece.className = selPiece.className;
+  setStyleWithoutTransition(hoverPiece, {
+    transform: selPiece.style.transform,
+    opacity: "1"
+  });
+  waitForNodeRemoval(selSquare).then(() => {
+    hoverPiece.style.opacity = "0";
+    selPiece.style.visibility = "";
+    restoreDestPiece();
+  });
 }
-
 
 function tryInit() {
   const cgBoard = $("cg-board");
@@ -44,48 +56,42 @@ function tryInit() {
   }
   console.log("Lichess Move Preview is activated");
 
-  const hoverPiece = document.createElement("piece");
-  hoverPiece.style.visibility = "hidden";
-  cgBoard.parentNode.appendChild(hoverPiece);
+  const hoverPiece = addHoverPiece(cgBoard);
 
   cgBoard.addEventListener("mouseover", (event) => {
     if (event.buttons) {
       return; // Don't do anything while dragging
     }
-    const target = event.target;
-    if (target.nodeName === "SQUARE" && target.classList.contains("move-dest")) {
-      console.log("mouseover", event);
-      const destSquare = target;
-      const destPiece = getBoardItem(cgBoard, "piece", destSquare.cgKey);
-      const selSquare = cgBoard.querySelector("square.selected");
-      const selPiece = getBoardItem(cgBoard, "piece", selSquare.cgKey);
+    /** @type {HTMLElement} */
+    const destSquare = event.target;
+    if (destSquare.nodeName !== "SQUARE" || !destSquare.classList.contains("move-dest")) {
+      return;
+    }
+    console.log("mouseover", event);
+    const selSquare = cgBoard.querySelector("square.selected");
+    const selPiece = getBoardItem(cgBoard, "piece", selSquare["cgKey"]);
+    lazyInitHovering(cgBoard, hoverPiece, selSquare, selPiece);
+    hoverPiece.style.transform = destSquare.style.transform;
 
-      moveHoverPiece2(hoverPiece, selPiece, destSquare);
-
-      if (destPiece) {
-        destPiece.style.visibility = "hidden";
-      }
+    destPiece = getBoardItem(cgBoard, "piece", destSquare["cgKey"]);
+    if (destPiece) {
+      destPiece.style.visibility = "hidden";
     }
   });
   cgBoard.addEventListener("mouseout", (event) => {
-    return;
     if (event.buttons) {
       return; // Don't do anything while dragging
     }
-    const target = event.target;
-    if (target.nodeName === "SQUARE" && target.classList.contains("move-dest")) {
-      // console.log("mouseout", event);
-      const destSquare = target;
-      const destPiece = getBoardItem(cgBoard, "piece", destSquare.cgKey);
-      const selSquare = cgBoard.querySelector("square.selected");
-      const selPiece = getBoardItem(cgBoard, "piece", selSquare.cgKey);
-      selPiece.addEventListener("transitionend", onTransitionEnd);
-      selPiece.style.transition = "transform 0.1s ease-in";
-      selPiece.style.transform = selSquare.style.transform;
-      if (destPiece) {
-        destPiece.style.visibility = null;
-      }
+    /** @type {HTMLElement} */
+    const destSquare = event.target;
+    if (destSquare.nodeName !== "SQUARE" || !destSquare.classList.contains("move-dest")) {
+      return;
     }
+    console.log("mouseout", event);
+    const selSquare = cgBoard.querySelector("square.selected");
+    const selPiece = getBoardItem(cgBoard, "piece", selSquare["cgKey"]);
+    hoverPiece.style.transform = selSquare.style.transform;
+    restoreDestPiece();
   });
   return true;
 }
