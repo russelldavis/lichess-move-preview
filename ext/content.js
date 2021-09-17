@@ -1,6 +1,8 @@
 import { setStyleWithoutTransition, waitForNodeRemoval } from "./utils.js";
 const $ = document.querySelector.bind(document);
 let destPiece = null;
+let selSquareKey = null;
+let cleanUpLastSelection = null;
 
 function restoreDestPiece() {
   if (destPiece) {
@@ -27,23 +29,34 @@ function addHoverPiece(cgBoard) {
   return hoverPiece;
 }
 
-function lazyInitHovering(_cgBoard, hoverPiece, selSquare, selPiece) {
-  // This works because a new selSquare is created every time a new selection is made
-  if (selSquare._lmpDidInit) {
+function lazyInitSelection(hoverPiece, selSquare, selPiece) {
+  if (selSquareKey === selSquare["cgKey"]) {
     return;
   }
-  selSquare._lmpDidInit = true;
+  // If the user clicks on a difference piece while another piece is already selected,
+  // we will get to this point with cleanUpLastSelection being non-null;
+  cleanUpLastSelection?.();
+
+  selSquareKey = selSquare["cgKey"];
   selPiece.style.visibility = "hidden";
   hoverPiece.className = selPiece.className;
   setStyleWithoutTransition(hoverPiece, {
     transform: selPiece.style.transform,
     opacity: "1"
   });
-  waitForNodeRemoval(selSquare).then(() => {
+
+  function _cleanUpLastSelection() {
+    if (_cleanUpLastSelection !== cleanUpLastSelection) {
+      return;
+    }
+    selSquareKey = null;
+    cleanUpLastSelection = null;
     hoverPiece.style.opacity = "0";
     selPiece.style.visibility = "";
     restoreDestPiece();
-  });
+  }
+  cleanUpLastSelection = _cleanUpLastSelection;
+  waitForNodeRemoval(selSquare).then(_cleanUpLastSelection);
 }
 
 function tryInit() {
@@ -70,7 +83,7 @@ function tryInit() {
     console.log("mouseover", event);
     const selSquare = cgBoard.querySelector("square.selected");
     const selPiece = getBoardItem(cgBoard, "piece", selSquare["cgKey"]);
-    lazyInitHovering(cgBoard, hoverPiece, selSquare, selPiece);
+    lazyInitSelection(hoverPiece, selSquare, selPiece);
     hoverPiece.style.transform = destSquare.style.transform;
 
     destPiece = getBoardItem(cgBoard, "piece", destSquare["cgKey"]);
