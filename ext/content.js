@@ -67,7 +67,8 @@ function addMoveDestListener(cgBoard, eventName, callback) {
     }
     /** @type {HTMLElement} */
     const target = event.target;
-    if (target.nodeName !== "SQUARE" || !target.classList.contains("move-dest")) {
+    // className might include move-dest or premove-dest
+    if (target.nodeName !== "SQUARE" || !target.className.includes("move-dest")) {
       return;
     }
     console.log(eventName, event);
