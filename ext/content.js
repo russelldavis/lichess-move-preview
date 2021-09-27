@@ -58,6 +58,27 @@ function lazyInitSelection(cgBoard, hoverPiece, selSquare) {
   }
   cleanUpLastSelection = _cleanUpLastSelection;
   waitForNodeRemoval(selSquare).then(_cleanUpLastSelection);
+
+  // It doesn't matter which dest node this finds (because when one gets removed, they all get removed).
+  const premoveDest = $(".premove-dest");
+  if (premoveDest) {
+    // The waitForNodeRemoval above covers most cases, even for premoves. This one covers one
+    // particular edge case: if the opponent makes a move while you're hovering a premove.
+    //
+    // In that case, selSquare doesn't get removed, but the premove-dest squares do get removed
+    // (and replaced by move-dest squares). Even in that case it usually doesn't matter that cleanup
+    // didn't happen, because you'll just be re-initializing things with the same selSquare.
+    //
+    // However, if you were hovering over a premove-dest square that contained one of your own
+    // pieces (i.e., premoving a re-capture), and the opponent makes a move that doesn't capture
+    // that piece, that square will *not* be a valid move-dest square, and there won't be a mouseout
+    // event (since the premove-dest node got removed), so restoreDestPiece() would never get
+    // called, and the destPiece would disappear from the board. This line fixes that.
+    //
+    // In all other cases, _cleanUpLastSelection will get called for *both* node removals, but it
+    // already guards against being called twice.
+    waitForNodeRemoval(premoveDest).then(_cleanUpLastSelection);
+  }
 }
 
 function addMoveDestListener(cgBoard, eventName, callback) {
