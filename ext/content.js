@@ -102,8 +102,8 @@ function tryInit() {
   const cgBoard = $("cg-board");
   // Several empty boards can get rendered and then removed during initialization.
   // Use the existence of .rcontrols to know when we're on the final cg-board
-  // (.pv_box is for analysis pages).
-  if (!(cgBoard && ($(".rcontrols") || $(".analyse__moves")))) {
+  // (.areplay is for analysis pages and puzzles).
+  if (!(cgBoard && ($(".rcontrols") || $(".areplay")))) {
     return false;
   }
 
