@@ -92,7 +92,7 @@ function addMoveDestListener(cgBoard, eventName, callback) {
     if (target.nodeName !== "SQUARE" || !target.className.includes("move-dest")) {
       return;
     }
-    console.log(eventName, event);
+    // console.log(eventName, event);
     const selSquare = cgBoard.querySelector("square.selected");
     callback(target, selSquare);
   });
@@ -125,6 +125,10 @@ function tryInit() {
     restoreDestPiece();
   });
 
+  // When going to a new puzzle on a puzzle page, sometimes cg-board gets
+  // removed and re-rendered (I think it's when the puzzle switches between
+  // black and white pieces).
+  waitForNodeRemoval(cgBoard).then(main);
   return true;
 }
 

@@ -11,13 +11,14 @@ export function setStyleWithoutTransition(el, styleObj) {
 
 export function waitForNodeRemoval(node) {
   return new Promise((resolve, _reject) => {
-    const origParent = node.parentNode;
     const observer = new MutationObserver(() => {
-      if (node.parentNode !== origParent) {
+      if (!node.isConnected) {
         observer.disconnect();
         resolve();
       }
     });
-    observer.observe(origParent, {childList: true});
+    for (let ancestor = node.parentNode; ancestor; ancestor = ancestor.parentNode) {
+      observer.observe(ancestor, {childList: true});
+    }
   });
 }
